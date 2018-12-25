@@ -1,14 +1,9 @@
-from itertools import tee
 from random import shuffle
 
 import numpy as np
-from py_tools.seq import grouped, cons
+from py_tools.seq import grouped, cons, pairwise
 
-
-def pairwise(seq):
-    a, b = tee(seq)
-    next(b)
-    return zip(a, b)
+from layers import DropoutLayer
 
 
 def _vectorized_result(j):
@@ -27,12 +22,9 @@ class DNN:
         for layer, (m, n) in zip(layers, pairwise(cons(input, (l.n for l in layers)))):
             assert layer.n == n
             layer.init_matrices(m)
+            if self.layers:
+                layer.previous = self.layers[-1]
             self.layers.append(layer)
-        # raise NotImplementedError()
-        # for l, (m, n) in zip(layers, pairwise(neurons)):
-        #     self.layers.append(l(m, n))
-        #     self.w.append(np.zeros([n, m]))
-        #     self.b.append(np.zeros([n, 1]))
 
     def initialize_rand(self):
         for l in self.layers:
@@ -60,10 +52,10 @@ class DNN:
         delta = last_layer.delta(a, y)
         nabla_b = [delta]
         nabla_w = [delta @ last_layer.x.T]
-        for l_p_1, l in pairwise(reversed(self.layers)):  # (l+1)th and l-th layers
-            delta = l_p_1.backprop(delta, l.z)
+        for l in reversed(self.layers[1:]):
+            delta = l.backprop(delta)
             nabla_b.append(delta)
-            nabla_w.append(delta @ l.x.T)
+            nabla_w.append(delta @ l.previous.x.T)
 
         return list(reversed(nabla_b)), list(reversed(nabla_w))
 
@@ -100,6 +92,7 @@ class DNN:
             # ----
 
     def learn(self, examples, batch_size=30, epochs=1, test=None):
+        self.dropout()
         for i in range(epochs):
             shuffle(examples)
             self.epoch(examples, batch_size)
@@ -107,6 +100,7 @@ class DNN:
                 print(self.test(test))
 
     def test(self, examples):
+        self.dropout_restore()
         success = 0
         for x, y in examples:
             if y == np.argmax(self._fit(x)):
@@ -117,3 +111,13 @@ class DNN:
         for l in self.layers:
             x = l.feed(x)
         return x
+
+    def dropout(self):
+        for l in self.layers:
+            if isinstance(l, DropoutLayer):
+                l.dropout()
+
+    def dropout_restore(self):
+        for l in self.layers:
+            if isinstance(l, DropoutLayer):
+                l.dropout_restore()

@@ -1,7 +1,7 @@
 import numpy as np
 
 from dnn import DNN
-from layers import Layer
+from layers import Layer, DropoutLayer
 from mnist_loader import load_mnist_simple
 from contextlib import contextmanager
 from time import time
@@ -47,7 +47,9 @@ def main():
     with timing(f""):
         # dnn = DNN(input=28 * 28, layers=[Layer(30, LQ), Layer(10, LCE)], eta=0.05)  # 96%
         # dnn = DNN(input=28 * 28, layers=[Layer(30, LQ), Layer(10, SM)], eta=0.001)  # 68%
-        dnn = DNN(input=28 * 28, layers=[Layer(100, LQ), Layer(10, LCE)], eta=0.05, lmbda=5)  # 98%
+        # dnn = DNN(input=28 * 28, layers=[Layer(100, LQ), Layer(10, LCE)], eta=0.05, lmbda=5)  # 98%
+        # dnn = DNN(input=28 * 28, layers=[DropoutLayer(100, LQ), Layer(10, LCE)], eta=0.05)  # 97.5%
+        dnn = DNN(input=28 * 28, layers=[DropoutLayer(160, LQ), Layer(10, LCE)], eta=0.05, lmbda=3)
         dnn.initialize_rand()
         dnn.learn(train, epochs=30, test=vadilation, batch_size=29)
 
