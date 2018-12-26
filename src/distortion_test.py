@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.ndimage as sp_ndi
-from mnist_loader import load_mnist_simple
+
+from expand_data import generate_distortions, transform_f
+from mnist_loader import load_mnist_simple, load_data, DATA_PATH
 from matplotlib import pyplot as plt
 
 
@@ -22,42 +24,62 @@ def find_transform(x01, y01, x02, y02, x03, y03, x1, y1, x2, y2, x3, y3):
 
 def prepare_digit():
     train, _, _ = load_mnist_simple()
-    digit = train[1][0].reshape((28, 28))
+    digit = train[7][0].reshape((28, 28))
     np.save('../data/digit.npy', digit)
 
-
-def distort(m, A, b):
-    result = np.zeros(m.shape)
-    for i, row in enumerate(result):
-        for j, p in enumerate(row):
-            new_indices = A @ np.array([i, j]) + b
-            i0, j0 = new_indices
-
-            try:
-                result[i, j] = m[int(i0), int(j0)]
-            except IndexError:
-                print(f"out of bounds: ({i}, {j}) -> ({i0}, {j0})")
-    return result
+def transforms_to_show(digit):
+    for a in generate_distortions():
+        yield sp_ndi.geometric_transform(digit, transform_f(a), prefilter=False)
 
 
-def distort2(m, A, b):
-    def f(x0):
-        r = A @ x0 + b
-        return tuple(r)
+def distort_digit():
+    prepare_digit()
+    digit = np.load('../data/digit.npy')
+    n, m = 4, 4
+    total = n * m
+    plt.subplot(n, m, 1)
+    plt.matshow(digit, fignum=False)
+    for i, distorted_digit in enumerate(transforms_to_show(digit), start=2):
+        if i > total:
+            print("no space on the plot left")
+            break
+        plt.subplot(n, m, i)
+        plt.matshow(distorted_digit, fignum=False)
+    plt.show()
 
-    r = sp_ndi.geometric_transform(m, f, prefilter=False)
-    return r
+
+def all_digits_average():
+    from functools import reduce
+    from operator import add
+    train, test, valid = load_mnist_simple((28, 28))
+    xx, _ = zip(*train, *test, *valid)
+    s = reduce(add, xx)
+    print(s.shape)
+    plt.matshow(s)
+    plt.show()
+
+
+def check_generation():
+    from functools import reduce
+    from operator import add
+    digit = np.load('../data/digit.npy')
+    s = reduce(add,
+               (sp_ndi.geometric_transform(digit, transform_f(a), prefilter=False) for a in generate_distortions()))
+    m = (np.max(s) - np.min(s)) / 2
+    print(m)
+    plt.matshow(np.abs(s - m))
+    plt.show()
+
+
+def check_dataset():
+    data = load_data(f"{DATA_PATH}/mnist_expaned_k00.pkl.gz")
+    print(len(data))
+    x, y = data[4324]
+    plt.matshow(x)
+    plt.show()
 
 
 if __name__ == '__main__':
-    # prepare_digit()
-    digit = np.load('../data/digit.npy')
-    A, b = find_transform(0, 0, 27, 0, 13.5, 27,
-                          27, 0, 0, 0, 23.5, 27)
-    plt.subplot(2, 1, 1)
-    plt.matshow(digit, fignum=False)
-    plt.subplot(2, 1, 2)
-    # plt.matshow(distort(digit, A, b), fignum=False)
-    plt.matshow(distort2(digit, A, b), fignum=False)
-    # plt.matshow(sp_ndi.affine_transform(digit, A, b), fignum=False)
-    plt.show()
+    # check_generation()
+    # distort_digit()
+    check_dataset()

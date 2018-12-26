@@ -9,23 +9,36 @@ function usually called by our neural network code.
 
 #### Libraries
 # Standard library
+from os.path import join as j
 import pickle
 import gzip
 
 # Third-party libraries
 import numpy as np
 
+DATA_PATH = '../data'
 
-def _load_mnist():
-    with gzip.open('../data/mnist.pkl.gz', 'rb') as f:
+
+def _load_mnist(path='mnist.pkl.gz'):
+    with gzip.open(j(DATA_PATH, path), 'rb') as f:
         u = pickle._Unpickler(f)
         u.encoding = 'latin1'
         return u.load()
 
 
-def load_mnist_simple():
-    return [list(zip([np.reshape(x, (784, 1)) for x in d[0]], d[1]))
-            for d in _load_mnist()]
+def dump_data(f_name, data):
+    with gzip.open(j(DATA_PATH, f_name), 'wb') as f:
+        pickle.dump(data, f)
+
+
+def load_data(f_name):
+    with gzip.open(j(DATA_PATH, f_name), 'rb') as f:
+        return pickle.load(f)
+
+
+def load_mnist_simple(shape=(784, 1)):
+    return [list(zip([np.reshape(x, shape) for x in xx], yy))
+            for xx, yy in _load_mnist()]
 
 
 def load_mnist_theano():

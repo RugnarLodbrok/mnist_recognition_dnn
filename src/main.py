@@ -1,19 +1,9 @@
-import numpy as np
 
 from dnn import DNN
 from layers import Layer, DropoutLayer
 from mnist_loader import load_mnist_simple
-from contextlib import contextmanager
-from time import time
 from cost_activations import LogisticCrossEntropy as LCE, LogisticQuadratic as LQ, SoftMax as SM
-
-
-@contextmanager
-def timing(msg):
-    t0 = time()
-    yield
-    print(msg, time() - t0)
-
+from utils import timing
 
 """
 ideas
