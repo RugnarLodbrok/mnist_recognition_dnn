@@ -49,6 +49,23 @@ def main():
     print(dnn.stats())
 
 
+def plot_accuracy():
+    import numpy as np
+    from matplotlib import pyplot as plt
+    train, test, vadilation = load_mnist_simple()
+    dnn = DNN(input=28 * 28, layers=[Layer(100, LQ), Layer(10, LCE)], eta=0.05, lmbda=1)
+    for l in dnn.layers:
+        l.w = np.random.random(l.w.shape) - 0.5
+    acc1 = list(dnn.learn_iter(train, epochs=20, test=vadilation))
+    dnn.initialize_rand()
+    acc2 = list(dnn.learn_iter(train, epochs=20, test=vadilation))
+    print(acc1)
+    print(acc2)
+    plt.plot(acc1)
+    plt.plot(acc2)
+    plt.show()
+
+
 def main2():
     dnn = DNN(input=28 * 28, layers=[DropoutLayer(160, LQ), Layer(10, LCE)], eta=0.05, lmbda=1)  # 98%
     dnn.initialize_rand()

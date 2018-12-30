@@ -93,12 +93,17 @@ class DNN:
             # ----
 
     def learn(self, examples, batch_size=30, epochs=1, test=None):
+        for acc in self.learn_iter(examples, batch_size, epochs, test):
+            print(acc)
+
+    def learn_iter(self, examples, batch_size=30, epochs=1, test=None):
         self.dropout()
         for i in range(epochs):
             shuffle(examples)
             self.epoch(examples, batch_size)
             if test:
-                print(self.test(test))
+                acc = self.test(test)
+                yield acc
 
     def test(self, examples):
         self.dropout_restore()
