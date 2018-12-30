@@ -27,6 +27,7 @@ def prepare_digit():
     digit = train[7][0].reshape((28, 28))
     np.save('../data/digit.npy', digit)
 
+
 def transforms_to_show(digit):
     for a in generate_distortions():
         yield sp_ndi.geometric_transform(digit, transform_f(a), prefilter=False)

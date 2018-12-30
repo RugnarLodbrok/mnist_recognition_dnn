@@ -1,9 +1,12 @@
+from math import sqrt
+
 import numpy as np
 
 
 class Layer:
     def __init__(self, n, activation):
         self.n = n
+        self.m = None
         self.w = None
         self.b = None
 
@@ -24,8 +27,12 @@ class Layer:
 
     def init_matrices(self, m):
         n = self.n
+        self.m = m
         self.w = np.zeros([n, m])
         self.b = np.zeros([n, 1])  # TODO: check why not zeros([m])
+
+    def init_random(self):
+        self.w = np.random.normal(0, 1/sqrt(self.m), self.w.shape)
 
     def feed(self, x):
         self.x = x

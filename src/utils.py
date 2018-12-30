@@ -6,6 +6,7 @@ import numpy as np
 
 @contextmanager
 def timing(msg):
+    print(msg, '...', end='\r')
     t0 = time()
     yield
     print(msg, time() - t0)

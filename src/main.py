@@ -1,7 +1,9 @@
+from itertools import islice
 
 from dnn import DNN
 from layers import Layer, DropoutLayer
-from mnist_loader import load_mnist_simple
+from random import shuffle
+from mnist_loader import load_mnist_simple, DATA_PATH, load_data
 from cost_activations import LogisticCrossEntropy as LCE, LogisticQuadratic as LQ, SoftMax as SM
 from utils import timing
 
@@ -45,6 +47,28 @@ def main():
 
     print('test:', dnn.test(test))
     print(dnn.stats())
+
+
+def main2():
+    dnn = DNN(input=28 * 28, layers=[DropoutLayer(160, LQ), Layer(10, LCE)], eta=0.05, lmbda=1)  # 98%
+    dnn.initialize_rand()
+    train, test, vadilation = load_mnist_simple()
+
+    f_names = [f'mnist_expaned_k0{i}.pkl.gz' for i in range(50)]
+    shuffle(f_names)
+    for f_name in f_names:
+        print(f_name)
+        with timing("load"):
+            raw_data = load_data(f_name)
+        with timing("shuffle"):
+            shuffle(raw_data)
+        with timing("reshape"):
+            data = [(x.reshape((784, 1)), y) for x, y in islice(raw_data, 100000)]
+            del raw_data
+        with timing("learn"):
+            dnn.learn(data)
+        del data
+        print('TEST:', dnn.test(test))
 
 
 if __name__ == '__main__':

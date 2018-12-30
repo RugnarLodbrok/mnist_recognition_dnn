@@ -4,6 +4,7 @@ import numpy as np
 from py_tools.seq import grouped, cons, pairwise
 
 from layers import DropoutLayer
+from mnist_loader import load_data
 
 
 def _vectorized_result(j):
@@ -28,7 +29,7 @@ class DNN:
 
     def initialize_rand(self):
         for l in self.layers:
-            l.w += (np.random.rand(*l.w.shape) - .5)
+            l.init_random()
 
     def stats(self):
         return ([np.average(l.w) for l in self.layers],
